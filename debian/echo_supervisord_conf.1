@@ -1,0 +1,1841 @@
+.\" Man page generated from reStructuredText.
+.
+.TH "ECHO_SUPERVISORD_CONF" "1" "December 10, 2015" "3.2.0" "Supervisor"
+.SH NAME
+echo_supervisord_conf \- Supervisor Configuration Documentation
+.
+.nr rst2man-indent-level 0
+.
+.de1 rstReportMargin
+\\$1 \\n[an-margin]
+level \\n[rst2man-indent-level]
+level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
+-
+\\n[rst2man-indent0]
+\\n[rst2man-indent1]
+\\n[rst2man-indent2]
+..
+.de1 INDENT
+.\" .rstReportMargin pre:
+. RS \\$1
+. nr rst2man-indent\\n[rst2man-indent-level] \\n[an-margin]
+. nr rst2man-indent-level +1
+.\" .rstReportMargin post:
+..
+.de UNINDENT
+. RE
+.\" indent \\n[an-margin]
+.\" old: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.nr rst2man-indent-level -1
+.\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.in \\n[rst2man-indent\\n[rst2man-indent-level]]u
+..
+.sp
+Supervisor is a client/server system that allows its users to monitor
+and control a number of processes on UNIX\-like operating systems.
+.sp
+It shares some of the same goals of programs like launchd,
+daemontools, and runit\&. Unlike some of these programs,
+it is not meant to be run as a substitute for \fBinit\fP as "process id
+1". Instead it is meant to be used to control processes related to a
+project or a customer, and is meant to start like any other program at
+boot time.
+.SH DOCUMENTATION
+.SS Creating a Configuration File
+.sp
+Once the Supervisor installation has completed, run
+\fBecho_supervisord_conf\fP\&.  This will print a "sample" Supervisor
+configuration file to your terminal\(aqs stdout.
+.sp
+Once you see the file echoed to your terminal, reinvoke the command as
+\fBecho_supervisord_conf > /etc/supervisord.conf\fP\&. This won\(aqt work if
+you do not have root access.
+.sp
+If you don\(aqt have root access, or you\(aqd rather not put the
+\fBsupervisord.conf\fP file in \fB/etc/supervisord.conf\(ga\fP, you
+can place it in the current directory (\fBecho_supervisord_conf >
+supervisord.conf\fP) and start \fBsupervisord\fP with the
+\fB\-c\fP flag in order to specify the configuration file
+location.
+.sp
+For example, \fBsupervisord \-c supervisord.conf\fP\&.  Using the \fB\-c\fP
+flag actually is redundant in this case, because
+\fBsupervisord\fP searches the current directory for a
+\fBsupervisord.conf\fP before it searches any other locations for
+the file, but it will work.
+.sp
+Once you have a configuration file on your filesystem, you can
+begin modifying it to your liking.
+.SS Configuration File
+.sp
+The Supervisor configuration file is conventionally named
+\fBsupervisord.conf\fP\&.  It is used by both \fBsupervisord\fP
+and \fBsupervisorctl\fP\&.  If either application is started
+without the \fB\-c\fP option (the option which is used to tell the
+application the configuration filename explicitly), the application
+will look for a file named \fBsupervisord.conf\fP within the
+following locations, in the specified order.  It will use the first
+file it finds.
+.INDENT 0.0
+.IP 1. 3
+\fB$CWD/supervisord.conf\fP
+.IP 2. 3
+\fB$CWD/etc/supervisord.conf\fP
+.IP 3. 3
+\fB/etc/supervisord.conf\fP
+.IP 4. 3
+\fB\&../etc/supervisord.conf\fP (Relative to the executable)
+.IP 5. 3
+\fB\&../supervisord.conf\fP (Relative to the executable)
+.UNINDENT
+.sp
+\fBNOTE:\fP
+.INDENT 0.0
+.INDENT 3.5
+Some distributions have packaged Supervisor with their own
+customizations.  These modified versions of Supervisor may load the
+configuration file from locations other than those described here.
+Notably, Ubuntu packages have been found that use
+\fB/etc/supervisor/supervisord.conf\fP\&.
+.UNINDENT
+.UNINDENT
+.SS File Format
+.sp
+\fBsupervisord.conf\fP is a Windows\-INI\-style (Python ConfigParser)
+file.  It has sections (each denoted by a \fB[header]\fP) and key / value
+pairs within the sections.  The sections and their allowable values
+are described below.
+.SS Environment Variables
+.sp
+Environment variables that are present in the environment at the time that
+\fBsupervisord\fP is started can be used in the configuration file
+using the Python string expression syntax \fB%(ENV_X)s\fP:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+[program:example]
+command=/usr/bin/example \-\-loglevel=%(ENV_LOGLEVEL)s
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+In the example above, the expression \fB%(ENV_LOGLEVEL)s\fP would be expanded
+to the value of the environment variable \fBLOGLEVEL\fP\&.
+.sp
+\fBNOTE:\fP
+.INDENT 0.0
+.INDENT 3.5
+In Supervisor 3.2 and later, \fB%(ENV_X)s\fP expressions are supported in
+all options.  In prior versions, some options support them, but most
+do not.  See the documentation for each option below.
+.UNINDENT
+.UNINDENT
+.SS \fB[unix_http_server]\fP Section Settings
+.sp
+The \fBsupervisord.conf\fP file contains a section named
+\fB[unix_http_server]\fP under which configuration parameters for an
+HTTP server that listens on a UNIX domain socket should be inserted.
+If the configuration file has no \fB[unix_http_server]\fP section, a
+UNIX domain socket HTTP server will not be started.  The allowable
+configuration values are as follows.
+.SS \fB[unix_http_server]\fP Section Values
+.sp
+\fBfile\fP
+.INDENT 0.0
+.INDENT 3.5
+A path to a UNIX domain socket (e.g. \fB/tmp/supervisord.sock\fP)
+on which supervisor will listen for HTTP/XML\-RPC requests.
+\fBsupervisorctl\fP uses XML\-RPC to communicate with
+\fBsupervisord\fP over this port.  This option can include the
+value \fB%(here)s\fP, which expands to the directory in which the
+\fBsupervisord\fP configuration file was found.
+.sp
+\fIDefault\fP:  None.
+.sp
+\fIRequired\fP:  No.
+.sp
+\fIIntroduced\fP: 3.0
+.UNINDENT
+.UNINDENT
+.sp
+\fBchmod\fP
+.INDENT 0.0
+.INDENT 3.5
+Change the UNIX permission mode bits of the UNIX domain socket to
+this value at startup.
+.sp
+\fIDefault\fP: \fB0700\fP
+.sp
+\fIRequired\fP:  No.
+.sp
+\fIIntroduced\fP: 3.0
+.UNINDENT
+.UNINDENT
+.sp
+\fBchown\fP
+.INDENT 0.0
+.INDENT 3.5
+Change the user and group of the socket file to this value.  May be
+a UNIX username (e.g. \fBchrism\fP) or a UNIX username and group
+separated by a colon (e.g. \fBchrism:wheel\fP).
+.sp
+\fIDefault\fP:  Use the username and group of the user who starts supervisord.
+.sp
+\fIRequired\fP:  No.
+.sp
+\fIIntroduced\fP: 3.0
+.UNINDENT
+.UNINDENT
+.sp
+\fBusername\fP
+.INDENT 0.0
+.INDENT 3.5
+The username required for authentication to this HTTP server.
+.sp
+\fIDefault\fP:  No username required.
+.sp
+\fIRequired\fP:  No.
+.sp
+\fIIntroduced\fP: 3.0
+.UNINDENT
+.UNINDENT
+.sp
+\fBpassword\fP
+.INDENT 0.0
+.INDENT 3.5
+The password required for authentication to this HTTP server.  This
+can be a cleartext password, or can be specified as a SHA\-1 hash if
+prefixed by the string \fB{SHA}\fP\&.  For example,
+\fB{SHA}82ab876d1387bfafe46cc1c8a2ef074eae50cb1d\fP is the SHA\-stored
+version of the password "thepassword".
+.sp
+Note that hashed password must be in hex format.
+.sp
+\fIDefault\fP:  No password required.
+.sp
+\fIRequired\fP:  No.
+.sp
+\fIIntroduced\fP: 3.0
+.UNINDENT
+.UNINDENT
+.SS \fB[unix_http_server]\fP Section Example
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+[unix_http_server]
+file = /tmp/supervisor.sock
+chmod = 0777
+chown= nobody:nogroup
+username = user
+password = 123
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.SS \fB[inet_http_server]\fP Section Settings
+.sp
+The \fBsupervisord.conf\fP file contains a section named
+\fB[inet_http_server]\fP under which configuration parameters for an
+HTTP server that listens on a TCP (internet) socket should be
+inserted.  If the configuration file has no \fB[inet_http_server]\fP
+section, an inet HTTP server will not be started.  The allowable
+configuration values are as follows.
+.SS \fB[inet_http_server]\fP Section Values
+.sp
+\fBport\fP
+.INDENT 0.0
+.INDENT 3.5
+A TCP host:port value or (e.g. \fB127.0.0.1:9001\fP) on which
+supervisor will listen for HTTP/XML\-RPC requests.
+\fBsupervisorctl\fP will use XML\-RPC to communicate with
+\fBsupervisord\fP over this port.  To listen on all interfaces
+in the machine, use \fB:9001\fP or \fB*:9001\fP\&.
+.sp
+\fIDefault\fP:  No default.
+.sp
+\fIRequired\fP:  Yes.
+.sp
+\fIIntroduced\fP: 3.0
+.UNINDENT
+.UNINDENT
+.sp
+\fBusername\fP
+.INDENT 0.0
+.INDENT 3.5
+The username required for authentication to this HTTP server.
+.sp
+\fIDefault\fP:  No username required.
+.sp
+\fIRequired\fP:  No.
+.sp
+\fIIntroduced\fP: 3.0
+.UNINDENT
+.UNINDENT
+.sp
+\fBpassword\fP
+.INDENT 0.0
+.INDENT 3.5
+The password required for authentication to this HTTP server.  This
+can be a cleartext password, or can be specified as a SHA\-1 hash if
+prefixed by the string \fB{SHA}\fP\&.  For example,
+\fB{SHA}82ab876d1387bfafe46cc1c8a2ef074eae50cb1d\fP is the SHA\-stored
+version of the password "thepassword".
+.sp
+Note that hashed password must be in hex format.
+.sp
+\fIDefault\fP:  No password required.
+.sp
+\fIRequired\fP:  No.
+.sp
+\fIIntroduced\fP: 3.0
+.UNINDENT
+.UNINDENT
+.SS \fB[inet_http_server]\fP Section Example
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+[inet_http_server]
+port = 127.0.0.1:9001
+username = user
+password = 123
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.SS \fB[supervisord]\fP Section Settings
+.sp
+The \fBsupervisord.conf\fP file contains a section named
+\fB[supervisord]\fP in which global settings related to the
+\fBsupervisord\fP process should be inserted.  These are as
+follows.
+.SS \fB[supervisord]\fP Section Values
+.sp
+\fBlogfile\fP
+.INDENT 0.0
+.INDENT 3.5
+The path to the activity log of the supervisord process.  This
+option can include the value \fB%(here)s\fP, which expands to the
+directory in which the supervisord configuration file was found.
+.sp
+\fIDefault\fP:  \fB$CWD/supervisord.log\fP
+.sp
+\fIRequired\fP:  No.
+.sp
+\fIIntroduced\fP: 3.0
+.UNINDENT
+.UNINDENT
+.sp
+\fBlogfile_maxbytes\fP
+.INDENT 0.0
+.INDENT 3.5
+The maximum number of bytes that may be consumed by the activity log
+file before it is rotated (suffix multipliers like "KB", "MB", and
+"GB" can be used in the value).  Set this value to 0 to indicate an
+unlimited log size.
+.sp
+\fIDefault\fP:  50MB
+.sp
+\fIRequired\fP:  No.
+.sp
+\fIIntroduced\fP: 3.0
+.UNINDENT
+.UNINDENT
+.sp
+\fBlogfile_backups\fP
+.INDENT 0.0
+.INDENT 3.5
+The number of backups to keep around resulting from activity log
+file rotation.  If set to 0, no backups will be kept.
+.sp
+\fIDefault\fP:  10
+.sp
+\fIRequired\fP:  No.
+.sp
+\fIIntroduced\fP: 3.0
+.UNINDENT
+.UNINDENT
+.sp
+\fBloglevel\fP
+.INDENT 0.0
+.INDENT 3.5
+The logging level, dictating what is written to the supervisord
+activity log.  One of \fBcritical\fP, \fBerror\fP, \fBwarn\fP, \fBinfo\fP,
+\fBdebug\fP, \fBtrace\fP, or \fBblather\fP\&.  Note that at log level
+\fBdebug\fP, the supervisord log file will record the stderr/stdout
+output of its child processes and extended info info about process
+state changes, which is useful for debugging a process which isn\(aqt
+starting properly.  See also: activity_log_levels\&.
+.sp
+\fIDefault\fP:  info
+.sp
+\fIRequired\fP:  No.
+.sp
+\fIIntroduced\fP: 3.0
+.UNINDENT
+.UNINDENT
+.sp
+\fBpidfile\fP
+.INDENT 0.0
+.INDENT 3.5
+The location in which supervisord keeps its pid file.  This option
+can include the value \fB%(here)s\fP, which expands to the directory
+in which the supervisord configuration file was found.
+.sp
+\fIDefault\fP:  \fB$CWD/supervisord.pid\fP
+.sp
+\fIRequired\fP:  No.
+.sp
+\fIIntroduced\fP: 3.0
+.UNINDENT
+.UNINDENT
+.sp
+\fBumask\fP
+.INDENT 0.0
+.INDENT 3.5
+The umask of the supervisord process.
+.sp
+\fIDefault\fP:  \fB022\fP
+.sp
+\fIRequired\fP:  No.
+.sp
+\fIIntroduced\fP: 3.0
+.UNINDENT
+.UNINDENT
+.sp
+\fBnodaemon\fP
+.INDENT 0.0
+.INDENT 3.5
+If true, supervisord will start in the foreground instead of
+daemonizing.
+.sp
+\fIDefault\fP:  false
+.sp
+\fIRequired\fP:  No.
+.sp
+\fIIntroduced\fP: 3.0
+.UNINDENT
+.UNINDENT
+.sp
+\fBminfds\fP
+.INDENT 0.0
+.INDENT 3.5
+The minimum number of file descriptors that must be available before
+supervisord will start successfully.  A call to setrlimit will be made
+to attempt to raise the soft and hard limits of the supervisord process to
+satisfy \fBminfds\fP\&.  The hard limit may only be raised if supervisord
+is run as root.  supervisord uses file descriptors liberally, and will
+enter a failure mode when one cannot be obtained from the OS, so it\(aqs
+useful to be able to specify a minimum value to ensure it doesn\(aqt run out
+of them during execution. This option is particularly useful on Solaris,
+which has a low per\-process fd limit by default.
+.sp
+\fIDefault\fP:  1024
+.sp
+\fIRequired\fP:  No.
+.sp
+\fIIntroduced\fP: 3.0
+.UNINDENT
+.UNINDENT
+.sp
+\fBminprocs\fP
+.INDENT 0.0
+.INDENT 3.5
+The minimum number of process descriptors that must be available
+before supervisord will start successfully.  A call to setrlimit will be
+made to attempt to raise the soft and hard limits of the supervisord process
+to satisfy \fBminprocs\fP\&.  The hard limit may only be raised if supervisord
+is run as root.  supervisord will enter a failure mode when the OS runs out
+of process descriptors, so it\(aqs useful to ensure that enough process
+descriptors are available upon \fBsupervisord\fP startup.
+.sp
+\fIDefault\fP:  200
+.sp
+\fIRequired\fP:  No.
+.sp
+\fIIntroduced\fP: 3.0
+.UNINDENT
+.UNINDENT
+.sp
+\fBnocleanup\fP
+.INDENT 0.0
+.INDENT 3.5
+Prevent supervisord from clearing any existing \fBAUTO\fP
+child log files at startup time.  Useful for debugging.
+.sp
+\fIDefault\fP:  false
+.sp
+\fIRequired\fP:  No.
+.sp
+\fIIntroduced\fP: 3.0
+.UNINDENT
+.UNINDENT
+.sp
+\fBchildlogdir\fP
+.INDENT 0.0
+.INDENT 3.5
+The directory used for \fBAUTO\fP child log files.  This option can
+include the value \fB%(here)s\fP, which expands to the directory in
+which the \fBsupervisord\fP configuration file was found.
+.sp
+\fIDefault\fP: value of Python\(aqs \fBtempfile.get_tempdir()\fP
+.sp
+\fIRequired\fP:  No.
+.sp
+\fIIntroduced\fP: 3.0
+.UNINDENT
+.UNINDENT
+.sp
+\fBuser\fP
+.INDENT 0.0
+.INDENT 3.5
+Instruct \fBsupervisord\fP to switch users to this UNIX user
+account before doing any meaningful processing.  The user can only
+be switched if \fBsupervisord\fP is started as the root user.
+If \fBsupervisord\fP can\(aqt switch users, it will still continue
+but will write a log message at the \fBcritical\fP level saying that it
+can\(aqt drop privileges.
+.sp
+\fIDefault\fP: do not switch users
+.sp
+\fIRequired\fP:  No.
+.sp
+\fIIntroduced\fP: 3.0
+.UNINDENT
+.UNINDENT
+.sp
+\fBdirectory\fP
+.INDENT 0.0
+.INDENT 3.5
+When \fBsupervisord\fP daemonizes, switch to this directory.
+This option can include the value \fB%(here)s\fP, which expands to the
+directory in which the \fBsupervisord\fP configuration file was
+found.
+.sp
+\fIDefault\fP: do not cd
+.sp
+\fIRequired\fP:  No.
+.sp
+\fIIntroduced\fP: 3.0
+.UNINDENT
+.UNINDENT
+.sp
+\fBstrip_ansi\fP
+.INDENT 0.0
+.INDENT 3.5
+Strip all ANSI escape sequences from child log files.
+.sp
+\fIDefault\fP: false
+.sp
+\fIRequired\fP:  No.
+.sp
+\fIIntroduced\fP: 3.0
+.UNINDENT
+.UNINDENT
+.sp
+\fBenvironment\fP
+.INDENT 0.0
+.INDENT 3.5
+A list of key/value pairs in the form \fBKEY="val",KEY2="val2"\fP that
+will be placed in the \fBsupervisord\fP process\(aq environment
+(and as a result in all of its child process\(aq environments).  This
+option can include the value \fB%(here)s\fP, which expands to the
+directory in which the supervisord configuration file was found.
+Values containing non\-alphanumeric characters should be quoted
+(e.g. \fBKEY="val:123",KEY2="val,456"\fP).  Otherwise, quoting the
+values is optional but recommended.  To escape percent characters,
+simply use two. (e.g. \fBURI="/first%%20name"\fP) \fBNote\fP that
+subprocesses will inherit the environment variables of the shell
+used to start \fBsupervisord\fP except for the ones overridden
+here and within the program\(aqs \fBenvironment\fP option.  See
+subprocess_environment\&.
+.sp
+\fIDefault\fP: no values
+.sp
+\fIRequired\fP:  No.
+.sp
+\fIIntroduced\fP: 3.0
+.UNINDENT
+.UNINDENT
+.sp
+\fBidentifier\fP
+.INDENT 0.0
+.INDENT 3.5
+The identifier string for this supervisor process, used by the RPC
+interface.
+.sp
+\fIDefault\fP: supervisor
+.sp
+\fIRequired\fP:  No.
+.sp
+\fIIntroduced\fP: 3.0
+.UNINDENT
+.UNINDENT
+.SS \fB[supervisord]\fP Section Example
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+[supervisord]
+logfile = /tmp/supervisord.log
+logfile_maxbytes = 50MB
+logfile_backups=10
+loglevel = info
+pidfile = /tmp/supervisord.pid
+nodaemon = false
+minfds = 1024
+minprocs = 200
+umask = 022
+user = chrism
+identifier = supervisor
+directory = /tmp
+nocleanup = true
+childlogdir = /tmp
+strip_ansi = false
+environment = KEY1="value1",KEY2="value2"
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.SS \fB[supervisorctl]\fP Section Settings
+.INDENT 0.0
+.INDENT 3.5
+The configuration file may contain settings for the
+\fBsupervisorctl\fP interactive shell program.  These options
+are listed below.
+.UNINDENT
+.UNINDENT
+.SS \fB[supervisorctl]\fP Section Values
+.sp
+\fBserverurl\fP
+.INDENT 0.0
+.INDENT 3.5
+The URL that should be used to access the supervisord server,
+e.g. \fBhttp://localhost:9001\fP\&.  For UNIX domain sockets, use
+\fBunix:///absolute/path/to/file.sock\fP\&.
+.sp
+\fIDefault\fP: \fBhttp://localhost:9001\fP
+.sp
+\fIRequired\fP:  No.
+.sp
+\fIIntroduced\fP: 3.0
+.UNINDENT
+.UNINDENT
+.sp
+\fBusername\fP
+.INDENT 0.0
+.INDENT 3.5
+The username to pass to the supervisord server for use in
+authentication.  This should be same as \fBusername\fP from the
+supervisord server configuration for the port or UNIX domain socket
+you\(aqre attempting to access.
+.sp
+\fIDefault\fP: No username
+.sp
+\fIRequired\fP:  No.
+.sp
+\fIIntroduced\fP: 3.0
+.UNINDENT
+.UNINDENT
+.sp
+\fBpassword\fP
+.INDENT 0.0
+.INDENT 3.5
+The password to pass to the supervisord server for use in
+authentication. This should be the cleartext version of \fBpassword\fP
+from the supervisord server configuration for the port or UNIX
+domain socket you\(aqre attempting to access.  This value cannot be
+passed as a SHA hash.  Unlike other passwords specified in this
+file, it must be provided in cleartext.
+.sp
+\fIDefault\fP: No password
+.sp
+\fIRequired\fP:  No.
+.sp
+\fIIntroduced\fP: 3.0
+.UNINDENT
+.UNINDENT
+.sp
+\fBprompt\fP
+.INDENT 0.0
+.INDENT 3.5
+String used as supervisorctl prompt.
+.sp
+\fIDefault\fP: \fBsupervisor\fP
+.sp
+\fIRequired\fP:  No.
+.sp
+\fIIntroduced\fP: 3.0
+.UNINDENT
+.UNINDENT
+.sp
+\fBhistory_file\fP
+.INDENT 0.0
+.INDENT 3.5
+A path to use as the \fBreadline\fP persistent history file.  If you
+enable this feature by choosing a path, your supervisorctl commands
+will be kept in the file, and you can use readline (e.g. arrow\-up)
+to invoke commands you performed in your last supervisorctl session.
+.sp
+\fIDefault\fP: No file
+.sp
+\fIRequired\fP:  No.
+.sp
+\fIIntroduced\fP: 3.0a5
+.UNINDENT
+.UNINDENT
+.SS \fB[supervisorctl]\fP Section Example
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+[supervisorctl]
+serverurl = unix:///tmp/supervisor.sock
+username = chris
+password = 123
+prompt = mysupervisor
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.SS \fB[program:x]\fP Section Settings
+.sp
+The configuration file must contain one or more \fBprogram\fP sections
+in order for supervisord to know which programs it should start and
+control.  The header value is composite value.  It is the word
+"program", followed directly by a colon, then the program name.  A
+header value of \fB[program:foo]\fP describes a program with the name of
+"foo".  The name is used within client applications that control the
+processes that are created as a result of this configuration.  It is
+an error to create a \fBprogram\fP section that does not have a name.
+The name must not include a colon character or a bracket character.
+The value of the name is used as the value for the
+\fB%(program_name)s\fP string expression expansion within other values
+where specified.
+.sp
+\fBNOTE:\fP
+.INDENT 0.0
+.INDENT 3.5
+A \fB[program:x]\fP section actually represents a "homogeneous
+process group" to supervisor (as of 3.0).  The members of the group
+are defined by the combination of the \fBnumprocs\fP and
+\fBprocess_name\fP parameters in the configuration.  By default, if
+numprocs and process_name are left unchanged from their defaults,
+the group represented by \fB[program:x]\fP will be named \fBx\fP and
+will have a single process named \fBx\fP in it.  This provides a
+modicum of backwards compatibility with older supervisor releases,
+which did not treat program sections as homogeneous process group
+definitions.
+.sp
+But for instance, if you have a \fB[program:foo]\fP section with a
+\fBnumprocs\fP of 3 and a \fBprocess_name\fP expression of
+\fB%(program_name)s_%(process_num)02d\fP, the "foo" group will
+contain three processes, named \fBfoo_00\fP, \fBfoo_01\fP, and
+\fBfoo_02\fP\&.  This makes it possible to start a number of very
+similar processes using a single \fB[program:x]\fP section.  All
+logfile names, all environment strings, and the command of programs
+can also contain similar Python string expressions, to pass
+slightly different parameters to each process.
+.UNINDENT
+.UNINDENT
+.SS \fB[program:x]\fP Section Values
+.sp
+\fBcommand\fP
+.INDENT 0.0
+.INDENT 3.5
+The command that will be run when this program is started.  The
+command can be either absolute (e.g. \fB/path/to/programname\fP) or
+relative (e.g. \fBprogramname\fP).  If it is relative, the
+supervisord\(aqs environment \fB$PATH\fP will be searched for the
+executable.  Programs can accept arguments, e.g. \fB/path/to/program
+foo bar\fP\&.  The command line can use double quotes to group
+arguments with spaces in them to pass to the program,
+e.g. \fB/path/to/program/name \-p "foo bar"\fP\&.  Note that the value of
+\fBcommand\fP may include Python string expressions,
+e.g. \fB/path/to/programname \-\-port=80%(process_num)02d\fP might
+expand to \fB/path/to/programname \-\-port=8000\fP at runtime.  String
+expressions are evaluated against a dictionary containing the keys
+\fBgroup_name\fP, \fBhost_node_name\fP, \fBprocess_num\fP, \fBprogram_name\fP,
+\fBhere\fP (the directory of the supervisord config file), and all
+supervisord\(aqs environment variables prefixed with \fBENV_\fP\&.  Controlled
+programs should themselves not be daemons, as supervisord assumes it is
+responsible for daemonizing its subprocesses (see
+nondaemonizing_of_subprocesses).
+.sp
+\fIDefault\fP: No default.
+.sp
+\fIRequired\fP:  Yes.
+.sp
+\fIIntroduced\fP: 3.0
+.UNINDENT
+.UNINDENT
+.sp
+\fBprocess_name\fP
+.INDENT 0.0
+.INDENT 3.5
+A Python string expression that is used to compose the supervisor
+process name for this process.  You usually don\(aqt need to worry
+about setting this unless you change \fBnumprocs\fP\&.  The string
+expression is evaluated against a dictionary that includes
+\fBgroup_name\fP, \fBhost_node_name\fP, \fBprocess_num\fP, \fBprogram_name\fP,
+and \fBhere\fP (the directory of the supervisord config file).
+.sp
+\fIDefault\fP: \fB%(program_name)s\fP
+.sp
+\fIRequired\fP:  No.
+.sp
+\fIIntroduced\fP: 3.0
+.UNINDENT
+.UNINDENT
+.sp
+\fBnumprocs\fP
+.INDENT 0.0
+.INDENT 3.5
+Supervisor will start as many instances of this program as named by
+numprocs.  Note that if numprocs > 1, the \fBprocess_name\fP
+expression must include \fB%(process_num)s\fP (or any other
+valid Python string expression that includes \fBprocess_num\fP) within
+it.
+.sp
+\fIDefault\fP: 1
+.sp
+\fIRequired\fP:  No.
+.sp
+\fIIntroduced\fP: 3.0
+.UNINDENT
+.UNINDENT
+.sp
+\fBnumprocs_start\fP
+.INDENT 0.0
+.INDENT 3.5
+An integer offset that is used to compute the number at which
+\fBnumprocs\fP starts.
+.sp
+\fIDefault\fP: 0
+.sp
+\fIRequired\fP:  No.
+.sp
+\fIIntroduced\fP: 3.0
+.UNINDENT
+.UNINDENT
+.sp
+\fBpriority\fP
+.INDENT 0.0
+.INDENT 3.5
+The relative priority of the program in the start and shutdown
+ordering.  Lower priorities indicate programs that start first and
+shut down last at startup and when aggregate commands are used in
+various clients (e.g. "start all"/"stop all").  Higher priorities
+indicate programs that start last and shut down first.
+.sp
+\fIDefault\fP: 999
+.sp
+\fIRequired\fP:  No.
+.sp
+\fIIntroduced\fP: 3.0
+.UNINDENT
+.UNINDENT
+.sp
+\fBautostart\fP
+.INDENT 0.0
+.INDENT 3.5
+If true, this program will start automatically when supervisord is
+started.
+.sp
+\fIDefault\fP: true
+.sp
+\fIRequired\fP:  No.
+.sp
+\fIIntroduced\fP: 3.0
+.UNINDENT
+.UNINDENT
+.sp
+\fBstartsecs\fP
+.INDENT 0.0
+.INDENT 3.5
+The total number of seconds which the program needs to stay running
+after a startup to consider the start successful (moving the process
+from the \fBSTARTING\fP state to the \fBRUNNING\fP state).  Set to \fB0\fP
+to indicate that the program needn\(aqt stay running for any particular
+amount of time.
+.sp
+\fBNOTE:\fP
+.INDENT 0.0
+.INDENT 3.5
+Even if a process exits with an "expected" exit code (see
+\fBexitcodes\fP), the start will still be considered a failure
+if the process exits quicker than \fBstartsecs\fP\&.
+.UNINDENT
+.UNINDENT
+.sp
+\fIDefault\fP: 1
+.sp
+\fIRequired\fP:  No.
+.sp
+\fIIntroduced\fP: 3.0
+.UNINDENT
+.UNINDENT
+.sp
+\fBstartretries\fP
+.INDENT 0.0
+.INDENT 3.5
+The number of serial failure attempts that \fBsupervisord\fP
+will allow when attempting to start the program before giving up and
+putting the process into an \fBFATAL\fP state.  See
+process_states for explanation of the \fBFATAL\fP state.
+.sp
+\fIDefault\fP: 3
+.sp
+\fIRequired\fP:  No.
+.sp
+\fIIntroduced\fP: 3.0
+.UNINDENT
+.UNINDENT
+.sp
+\fBautorestart\fP
+.INDENT 0.0
+.INDENT 3.5
+Specifies if \fBsupervisord\fP should automatically restart a
+process if it exits when it is in the \fBRUNNING\fP state.  May be
+one of \fBfalse\fP, \fBunexpected\fP, or \fBtrue\fP\&.  If \fBfalse\fP, the
+process will not be autorestarted.  If \fBunexpected\fP, the process
+will be restarted when the program exits with an exit code that is
+not one of the exit codes associated with this process\(aq configuration
+(see \fBexitcodes\fP).  If \fBtrue\fP, the process will be unconditionally
+restarted when it exits, without regard to its exit code.
+.sp
+\fBNOTE:\fP
+.INDENT 0.0
+.INDENT 3.5
+\fBautorestart\fP controls whether \fBsupervisord\fP will
+autorestart a program if it exits after it has successfully started
+up (the process is in the \fBRUNNING\fP state).
+.sp
+\fBsupervisord\fP has a different restart mechanism for when the
+process is starting up (the process is in the \fBSTARTING\fP state).
+Retries during process startup are controlled by \fBstartsecs\fP
+and \fBstartretries\fP\&.
+.UNINDENT
+.UNINDENT
+.sp
+\fIDefault\fP: unexpected
+.sp
+\fIRequired\fP:  No.
+.sp
+\fIIntroduced\fP: 3.0
+.UNINDENT
+.UNINDENT
+.sp
+\fBexitcodes\fP
+.INDENT 0.0
+.INDENT 3.5
+The list of "expected" exit codes for this program used with \fBautorestart\fP\&.
+If the \fBautorestart\fP parameter is set to \fBunexpected\fP, and the process
+exits in any other way than as a result of a supervisor stop
+request, \fBsupervisord\fP will restart the process if it exits
+with an exit code that is not defined in this list.
+.sp
+\fIDefault\fP: 0,2
+.sp
+\fIRequired\fP:  No.
+.sp
+\fIIntroduced\fP: 3.0
+.UNINDENT
+.UNINDENT
+.sp
+\fBstopsignal\fP
+.INDENT 0.0
+.INDENT 3.5
+The signal used to kill the program when a stop is requested.  This
+can be any of TERM, HUP, INT, QUIT, KILL, USR1, or USR2.
+.sp
+\fIDefault\fP: TERM
+.sp
+\fIRequired\fP:  No.
+.sp
+\fIIntroduced\fP: 3.0
+.UNINDENT
+.UNINDENT
+.sp
+\fBstopwaitsecs\fP
+.INDENT 0.0
+.INDENT 3.5
+The number of seconds to wait for the OS to return a SIGCHILD to
+\fBsupervisord\fP after the program has been sent a stopsignal.
+If this number of seconds elapses before \fBsupervisord\fP
+receives a SIGCHILD from the process, \fBsupervisord\fP will
+attempt to kill it with a final SIGKILL.
+.sp
+\fIDefault\fP: 10
+.sp
+\fIRequired\fP:  No.
+.sp
+\fIIntroduced\fP: 3.0
+.UNINDENT
+.UNINDENT
+.sp
+\fBstopasgroup\fP
+.INDENT 0.0
+.INDENT 3.5
+If true, the flag causes supervisor to send the stop signal to the
+whole process group and implies \fBkillasgroup\fP is true.  This is useful
+for programs, such as Flask in debug mode, that do not propagate
+stop signals to their children, leaving them orphaned.
+.sp
+\fIDefault\fP: false
+.sp
+\fIRequired\fP:  No.
+.sp
+\fIIntroduced\fP: 3.0b1
+.UNINDENT
+.UNINDENT
+.sp
+\fBkillasgroup\fP
+.INDENT 0.0
+.INDENT 3.5
+If true, when resorting to send SIGKILL to the program to terminate
+it send it to its whole process group instead, taking care of its
+children as well, useful e.g with Python programs using
+\fBmultiprocessing\fP\&.
+.sp
+\fIDefault\fP: false
+.sp
+\fIRequired\fP:  No.
+.sp
+\fIIntroduced\fP: 3.0a11
+.UNINDENT
+.UNINDENT
+.sp
+\fBuser\fP
+.INDENT 0.0
+.INDENT 3.5
+Instruct \fBsupervisord\fP to use this UNIX user account as the
+account which runs the program.  The user can only be switched if
+\fBsupervisord\fP is run as the root user.  If \fBsupervisord\fP
+can\(aqt switch to the specified user, the program will not be started.
+.sp
+\fBNOTE:\fP
+.INDENT 0.0
+.INDENT 3.5
+The user will be changed using \fBsetuid\fP only.  This does not start
+a login shell and does not change environment variables like
+\fBUSER\fP or \fBHOME\fP\&.  See subprocess_environment for details.
+.UNINDENT
+.UNINDENT
+.sp
+\fIDefault\fP: Do not switch users
+.sp
+\fIRequired\fP:  No.
+.sp
+\fIIntroduced\fP: 3.0
+.UNINDENT
+.UNINDENT
+.sp
+\fBredirect_stderr\fP
+.INDENT 0.0
+.INDENT 3.5
+If true, cause the process\(aq stderr output to be sent back to
+\fBsupervisord\fP on its stdout file descriptor (in UNIX shell
+terms, this is the equivalent of executing \fB/the/program 2>&1\fP).
+.sp
+\fBNOTE:\fP
+.INDENT 0.0
+.INDENT 3.5
+Do not set \fBredirect_stderr=true\fP in an \fB[eventlistener:x]\fP section.
+Eventlisteners use \fBstdout\fP and \fBstdin\fP to communicate with
+\fBsupervisord\fP\&.  If \fBstderr\fP is redirected, output from
+\fBstderr\fP will interfere with the eventlistener protocol.
+.UNINDENT
+.UNINDENT
+.sp
+\fIDefault\fP: false
+.sp
+\fIRequired\fP:  No.
+.sp
+\fIIntroduced\fP: 3.0, replaces 2.0\(aqs \fBlog_stdout\fP and \fBlog_stderr\fP
+.UNINDENT
+.UNINDENT
+.sp
+\fBstdout_logfile\fP
+.INDENT 0.0
+.INDENT 3.5
+Put process stdout output in this file (and if redirect_stderr is
+true, also place stderr output in this file).  If \fBstdout_logfile\fP
+is unset or set to \fBAUTO\fP, supervisor will automatically choose a
+file location.  If this is set to \fBNONE\fP, supervisord will create
+no log file.  \fBAUTO\fP log files and their backups will be deleted
+when \fBsupervisord\fP restarts.  The \fBstdout_logfile\fP value
+can contain Python string expressions that will evaluated against a
+dictionary that contains the keys \fBgroup_name\fP, \fBhost_node_name\fP,
+\fBprocess_num\fP, \fBprogram_name\fP, and \fBhere\fP (the directory of the
+supervisord config file).
+.sp
+\fBNOTE:\fP
+.INDENT 0.0
+.INDENT 3.5
+It is not possible for two processes to share a single log file
+(\fBstdout_logfile\fP) when rotation (\fBstdout_logfile_maxbytes\fP)
+is enabled.  This will result in the file being corrupted.
+.UNINDENT
+.UNINDENT
+.sp
+\fIDefault\fP: \fBAUTO\fP
+.sp
+\fIRequired\fP:  No.
+.sp
+\fIIntroduced\fP: 3.0, replaces 2.0\(aqs \fBlogfile\fP
+.UNINDENT
+.UNINDENT
+.sp
+\fBstdout_logfile_maxbytes\fP
+.INDENT 0.0
+.INDENT 3.5
+The maximum number of bytes that may be consumed by
+\fBstdout_logfile\fP before it is rotated (suffix multipliers like
+"KB", "MB", and "GB" can be used in the value).  Set this value to 0
+to indicate an unlimited log size.
+.sp
+\fIDefault\fP: 50MB
+.sp
+\fIRequired\fP:  No.
+.sp
+\fIIntroduced\fP: 3.0, replaces 2.0\(aqs \fBlogfile_maxbytes\fP
+.UNINDENT
+.UNINDENT
+.sp
+\fBstdout_logfile_backups\fP
+.INDENT 0.0
+.INDENT 3.5
+The number of \fBstdout_logfile\fP backups to keep around resulting
+from process stdout log file rotation.  If set to 0, no backups
+will be kept.
+.sp
+\fIDefault\fP: 10
+.sp
+\fIRequired\fP:  No.
+.sp
+\fIIntroduced\fP: 3.0, replaces 2.0\(aqs \fBlogfile_backups\fP
+.UNINDENT
+.UNINDENT
+.sp
+\fBstdout_capture_maxbytes\fP
+.INDENT 0.0
+.INDENT 3.5
+Max number of bytes written to capture FIFO when process is in
+"stdout capture mode" (see capture_mode).  Should be an
+integer (suffix multipliers like "KB", "MB" and "GB" can used in the
+value).  If this value is 0, process capture mode will be off.
+.sp
+\fIDefault\fP: 0
+.sp
+\fIRequired\fP:  No.
+.sp
+\fIIntroduced\fP: 3.0, replaces 2.0\(aqs \fBlogfile_backups\fP
+.UNINDENT
+.UNINDENT
+.sp
+\fBstdout_events_enabled\fP
+.INDENT 0.0
+.INDENT 3.5
+If true, PROCESS_LOG_STDOUT events will be emitted when the process
+writes to its stdout file descriptor.  The events will only be
+emitted if the file descriptor is not in capture mode at the time
+the data is received (see capture_mode).
+.sp
+\fIDefault\fP: 0
+.sp
+\fIRequired\fP:  No.
+.sp
+\fIIntroduced\fP: 3.0a7
+.UNINDENT
+.UNINDENT
+.sp
+\fBstderr_logfile\fP
+.INDENT 0.0
+.INDENT 3.5
+Put process stderr output in this file unless \fBredirect_stderr\fP is
+true.  Accepts the same value types as \fBstdout_logfile\fP and may
+contain the same Python string expressions.
+.sp
+\fBNOTE:\fP
+.INDENT 0.0
+.INDENT 3.5
+It is not possible for two processes to share a single log file
+(\fBstderr_logfile\fP) when rotation (\fBstderr_logfile_maxbytes\fP)
+is enabled.  This will result in the file being corrupted.
+.UNINDENT
+.UNINDENT
+.sp
+\fIDefault\fP: \fBAUTO\fP
+.sp
+\fIRequired\fP:  No.
+.sp
+\fIIntroduced\fP: 3.0
+.UNINDENT
+.UNINDENT
+.sp
+\fBstderr_logfile_maxbytes\fP
+.INDENT 0.0
+.INDENT 3.5
+The maximum number of bytes before logfile rotation for
+\fBstderr_logfile\fP\&.  Accepts the same value types as
+\fBstdout_logfile_maxbytes\fP\&.
+.sp
+\fIDefault\fP: 50MB
+.sp
+\fIRequired\fP:  No.
+.sp
+\fIIntroduced\fP: 3.0
+.UNINDENT
+.UNINDENT
+.sp
+\fBstderr_logfile_backups\fP
+.INDENT 0.0
+.INDENT 3.5
+The number of backups to keep around resulting from process stderr
+log file rotation.  If set to 0, no backups will be kept.
+.sp
+\fIDefault\fP: 10
+.sp
+\fIRequired\fP:  No.
+.sp
+\fIIntroduced\fP: 3.0
+.UNINDENT
+.UNINDENT
+.sp
+\fBstderr_capture_maxbytes\fP
+.INDENT 0.0
+.INDENT 3.5
+Max number of bytes written to capture FIFO when process is in
+"stderr capture mode" (see capture_mode).  Should be an
+integer (suffix multipliers like "KB", "MB" and "GB" can used in the
+value).  If this value is 0, process capture mode will be off.
+.sp
+\fIDefault\fP: 0
+.sp
+\fIRequired\fP:  No.
+.sp
+\fIIntroduced\fP: 3.0
+.UNINDENT
+.UNINDENT
+.sp
+\fBstderr_events_enabled\fP
+.INDENT 0.0
+.INDENT 3.5
+If true, PROCESS_LOG_STDERR events will be emitted when the process
+writes to its stderr file descriptor.  The events will only be
+emitted if the file descriptor is not in capture mode at the time
+the data is received (see capture_mode).
+.sp
+\fIDefault\fP: false
+.sp
+\fIRequired\fP:  No.
+.sp
+\fIIntroduced\fP: 3.0a7
+.UNINDENT
+.UNINDENT
+.sp
+\fBenvironment\fP
+.INDENT 0.0
+.INDENT 3.5
+A list of key/value pairs in the form \fBKEY="val",KEY2="val2"\fP that
+will be placed in the child process\(aq environment.  The environment
+string may contain Python string expressions that will be evaluated
+against a dictionary containing \fBgroup_name\fP, \fBhost_node_name\fP,
+\fBprocess_num\fP, \fBprogram_name\fP, and \fBhere\fP (the directory of the
+supervisord config file).  Values containing non\-alphanumeric characters
+should be quoted (e.g. \fBKEY="val:123",KEY2="val,456"\fP).  Otherwise,
+quoting the values is optional but recommended.  \fBNote\fP that the
+subprocess will inherit the environment variables of the shell used to
+start "supervisord" except for the ones overridden here.  See
+subprocess_environment\&.
+.sp
+\fIDefault\fP: No extra environment
+.sp
+\fIRequired\fP:  No.
+.sp
+\fIIntroduced\fP: 3.0
+.UNINDENT
+.UNINDENT
+.sp
+\fBdirectory\fP
+.INDENT 0.0
+.INDENT 3.5
+A file path representing a directory to which \fBsupervisord\fP
+should temporarily chdir before exec\(aqing the child.
+.sp
+\fIDefault\fP: No chdir (inherit supervisor\(aqs)
+.sp
+\fIRequired\fP:  No.
+.sp
+\fIIntroduced\fP: 3.0
+.UNINDENT
+.UNINDENT
+.sp
+\fBumask\fP
+.INDENT 0.0
+.INDENT 3.5
+An octal number (e.g. 002, 022) representing the umask of the
+process.
+.sp
+\fIDefault\fP: No special umask (inherit supervisor\(aqs)
+.sp
+\fIRequired\fP:  No.
+.sp
+\fIIntroduced\fP: 3.0
+.UNINDENT
+.UNINDENT
+.sp
+\fBserverurl\fP
+.INDENT 0.0
+.INDENT 3.5
+The URL passed in the environment to the subprocess process as
+\fBSUPERVISOR_SERVER_URL\fP (see \fBsupervisor.childutils\fP) to
+allow the subprocess to easily communicate with the internal HTTP
+server.  If provided, it should have the same syntax and structure
+as the \fB[supervisorctl]\fP section option of the same name.  If this
+is set to AUTO, or is unset, supervisor will automatically construct
+a server URL, giving preference to a server that listens on UNIX
+domain sockets over one that listens on an internet socket.
+.sp
+\fIDefault\fP: AUTO
+.sp
+\fIRequired\fP:  No.
+.sp
+\fIIntroduced\fP: 3.0
+.UNINDENT
+.UNINDENT
+.SS \fB[program:x]\fP Section Example
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+[program:cat]
+command=/bin/cat
+process_name=%(program_name)s
+numprocs=1
+directory=/tmp
+umask=022
+priority=999
+autostart=true
+autorestart=unexpected
+startsecs=10
+startretries=3
+exitcodes=0,2
+stopsignal=TERM
+stopwaitsecs=10
+stopasgroup=false
+killasgroup=false
+user=chrism
+redirect_stderr=false
+stdout_logfile=/a/path
+stdout_logfile_maxbytes=1MB
+stdout_logfile_backups=10
+stdout_capture_maxbytes=1MB
+stdout_events_enabled=false
+stderr_logfile=/a/path
+stderr_logfile_maxbytes=1MB
+stderr_logfile_backups=10
+stderr_capture_maxbytes=1MB
+stderr_events_enabled=false
+environment=A="1",B="2"
+serverurl=AUTO
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.SS \fB[include]\fP Section Settings
+.sp
+The \fBsupervisord.conf\fP file may contain a section named
+\fB[include]\fP\&.  If the configuration file contains an \fB[include]\fP
+section, it must contain a single key named "files".  The values in
+this key specify other configuration files to be included within the
+configuration.
+.SS \fB[include]\fP Section Values
+.sp
+\fBfiles\fP
+.INDENT 0.0
+.INDENT 3.5
+A space\-separated sequence of file globs.  Each file glob may be
+absolute or relative.  If the file glob is relative, it is
+considered relative to the location of the configuration file which
+includes it.  A "glob" is a file pattern which matches a specified
+pattern according to the rules used by the Unix shell. No tilde
+expansion is done, but \fB*\fP, \fB?\fP, and character ranges expressed
+with \fB[]\fP will be correctly matched.  Recursive includes from
+included files are not supported.
+.sp
+\fIDefault\fP: No default (required)
+.sp
+\fIRequired\fP:  Yes.
+.sp
+\fIIntroduced\fP: 3.0
+.UNINDENT
+.UNINDENT
+.SS \fB[include]\fP Section Example
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+[include]
+files = /an/absolute/filename.conf /an/absolute/*.conf foo.conf config??.conf
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.SS \fB[group:x]\fP Section Settings
+.sp
+It is often useful to group "homogeneous" process groups (aka
+"programs") together into a "heterogeneous" process group so they can
+be controlled as a unit from Supervisor\(aqs various controller
+interfaces.
+.sp
+To place programs into a group so you can treat them as a unit, define
+a \fB[group:x]\fP section in your configuration file.  The group header
+value is a composite.  It is the word "group", followed directly by a
+colon, then the group name.  A header value of \fB[group:foo]\fP
+describes a group with the name of "foo".  The name is used within
+client applications that control the processes that are created as a
+result of this configuration.  It is an error to create a \fBgroup\fP
+section that does not have a name.  The name must not include a colon
+character or a bracket character.
+.sp
+For a \fB[group:x]\fP, there must be one or more \fB[program:x]\fP
+sections elsewhere in your configuration file, and the group must
+refer to them by name in the \fBprograms\fP value.
+.sp
+If "homogeneous" process groups (represented by program sections) are
+placed into a "heterogeneous" group via \fB[group:x]\fP section\(aqs
+\fBprograms\fP line, the homogeneous groups that are implied by the
+program section will not exist at runtime in supervisor.  Instead, all
+processes belonging to each of the homogeneous groups will be placed
+into the heterogeneous group.  For example, given the following group
+configuration:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+[group:foo]
+programs=bar,baz
+priority=999
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+Given the above, at supervisord startup, the \fBbar\fP and \fBbaz\fP
+homogeneous groups will not exist, and the processes that would have
+been under them will now be moved into the \fBfoo\fP group.
+.SS \fB[group:x]\fP Section Values
+.sp
+\fBprograms\fP
+.INDENT 0.0
+.INDENT 3.5
+A comma\-separated list of program names.  The programs which are
+listed become members of the group.
+.sp
+\fIDefault\fP: No default (required)
+.sp
+\fIRequired\fP:  Yes.
+.sp
+\fIIntroduced\fP: 3.0
+.UNINDENT
+.UNINDENT
+.sp
+\fBpriority\fP
+.INDENT 0.0
+.INDENT 3.5
+A priority number analogous to a \fB[program:x]\fP priority value
+assigned to the group.
+.sp
+\fIDefault\fP: 999
+.sp
+\fIRequired\fP:  No.
+.sp
+\fIIntroduced\fP: 3.0
+.UNINDENT
+.UNINDENT
+.SS \fB[group:x]\fP Section Example
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+[group:foo]
+programs=bar,baz
+priority=999
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.SS \fB[fcgi\-program:x]\fP Section Settings
+.sp
+Supervisor can manage groups of \fI\%FastCGI\fP
+processes that all listen on the same socket.  Until now, deployment
+flexibility for FastCGI was limited.  To get full process management,
+you could use mod_fastcgi under Apache but then you were stuck with
+Apache\(aqs inefficient concurrency model of one process or thread per
+connection.  In addition to requiring more CPU and memory resources,
+the process/thread per connection model can be quickly saturated by a
+slow resource, preventing other resources from being served.  In order
+to take advantage of newer event\-driven web servers such as lighttpd
+or nginx which don\(aqt include a built\-in process manager, you had to
+use scripts like cgi\-fcgi or spawn\-fcgi.  These can be used in
+conjunction with a process manager such as supervisord or daemontools
+but require each FastCGI child process to bind to its own socket.
+The disadvantages of this are: unnecessarily complicated web server
+configuration, ungraceful restarts, and reduced fault tolerance.  With
+fewer sockets to configure, web server configurations are much smaller
+if groups of FastCGI processes can share sockets.  Shared sockets
+allow for graceful restarts because the socket remains bound by the
+parent process while any of the child processes are being restarted.
+Finally, shared sockets are more fault tolerant because if a given
+process fails, other processes can continue to serve inbound
+connections.
+.sp
+With integrated FastCGI spawning support, Supervisor gives you the
+best of both worlds.  You get full\-featured process management with
+groups of FastCGI processes sharing sockets without being tied to a
+particular web server.  It\(aqs a clean separation of concerns, allowing
+the web server and the process manager to each do what they do best.
+.sp
+\fBNOTE:\fP
+.INDENT 0.0
+.INDENT 3.5
+The socket manager in Supervisor was originally developed to support
+FastCGI processes but it is not limited to FastCGI.  Other protocols may
+be used as well with no special configuration.  Any program that can
+access an open socket from a file descriptor (e.g. with
+\fI\%socket.fromfd\fP
+in Python) can use the socket manager.  Supervisor will automatically
+create the socket, bind, and listen before forking the first child in a
+group.  The socket will be passed to each child on file descriptor
+number \fB0\fP (zero).  When the last child in the group exits,
+Supervisor will close the socket.
+.UNINDENT
+.UNINDENT
+.sp
+All the options available to \fB[program:x]\fP sections are
+also respected by \fBfcgi\-program\fP sections.
+.SS \fB[fcgi\-program:x]\fP Section Values
+.sp
+\fB[fcgi\-program:x]\fP sections have a single key which \fB[program:x]\fP
+sections do not have.
+.sp
+\fBsocket\fP
+.INDENT 0.0
+.INDENT 3.5
+The FastCGI socket for this program, either TCP or UNIX domain
+socket. For TCP sockets, use this format: \fBtcp://localhost:9002\fP\&.
+For UNIX domain sockets, use \fBunix:///absolute/path/to/file.sock\fP\&.
+String expressions are evaluated against a dictionary containing the
+keys "program_name" and "here" (the directory of the supervisord
+config file).
+.sp
+\fIDefault\fP: No default.
+.sp
+\fIRequired\fP:  Yes.
+.sp
+\fIIntroduced\fP: 3.0
+.UNINDENT
+.UNINDENT
+.sp
+\fBsocket_owner\fP
+.INDENT 0.0
+.INDENT 3.5
+For UNIX domain sockets, this parameter can be used to specify the user
+and group for the FastCGI socket. May be a UNIX username (e.g. chrism)
+or a UNIX username and group separated by a colon (e.g. chrism:wheel).
+.sp
+\fIDefault\fP: Uses the user and group set for the fcgi\-program
+.sp
+\fIRequired\fP:  No.
+.sp
+\fIIntroduced\fP: 3.0
+.UNINDENT
+.UNINDENT
+.sp
+\fBsocket_mode\fP
+.INDENT 0.0
+.INDENT 3.5
+For UNIX domain sockets, this parameter can be used to specify the
+permission mode.
+.sp
+\fIDefault\fP: 0700
+.sp
+\fIRequired\fP:  No.
+.sp
+\fIIntroduced\fP: 3.0
+.UNINDENT
+.UNINDENT
+.sp
+Consult \fI\%[program:x] Section Settings\fP for other allowable keys, delta the
+above constraints and additions.
+.SS \fB[fcgi\-program:x]\fP Section Example
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+[fcgi\-program:fcgiprogramname]
+command=/usr/bin/example.fcgi
+socket=unix:///var/run/supervisor/%(program_name)s.sock
+socket_owner=chrism
+socket_mode=0700
+process_name=%(program_name)s_%(process_num)02d
+numprocs=5
+directory=/tmp
+umask=022
+priority=999
+autostart=true
+autorestart=unexpected
+startsecs=1
+startretries=3
+exitcodes=0,2
+stopsignal=QUIT
+stopasgroup=false
+killasgroup=false
+stopwaitsecs=10
+user=chrism
+redirect_stderr=true
+stdout_logfile=/a/path
+stdout_logfile_maxbytes=1MB
+stdout_logfile_backups=10
+stdout_events_enabled=false
+stderr_logfile=/a/path
+stderr_logfile_maxbytes=1MB
+stderr_logfile_backups=10
+stderr_events_enabled=false
+environment=A="1",B="2"
+serverurl=AUTO
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.SS \fB[eventlistener:x]\fP Section Settings
+.sp
+Supervisor allows specialized homogeneous process groups ("event
+listener pools") to be defined within the configuration file.  These
+pools contain processes that are meant to receive and respond to event
+notifications from supervisor\(aqs event system.  See events for
+an explanation of how events work and how to implement programs that
+can be declared as event listeners.
+.sp
+Note that all the options available to \fB[program:x]\fP sections are
+respected by eventlistener sections \fIexcept\fP for
+\fBstdout_capture_maxbytes\fP and \fBstderr_capture_maxbytes\fP (event
+listeners cannot emit process communication events, see
+capture_mode).
+.SS \fB[eventlistener:x]\fP Section Values
+.sp
+\fB[eventlistener:x]\fP sections have a few keys which \fB[program:x]\fP
+sections do not have.
+.sp
+\fBbuffer_size\fP
+.INDENT 0.0
+.INDENT 3.5
+The event listener pool\(aqs event queue buffer size.  When a listener
+pool\(aqs event buffer is overflowed (as can happen when an event
+listener pool cannot keep up with all of the events sent to it), the
+oldest event in the buffer is discarded.
+.UNINDENT
+.UNINDENT
+.sp
+\fBevents\fP
+.INDENT 0.0
+.INDENT 3.5
+A comma\-separated list of event type names that this listener is
+"interested" in receiving notifications for (see
+event_types for a list of valid event type names).
+.UNINDENT
+.UNINDENT
+.sp
+\fBresult_handler\fP
+.INDENT 0.0
+.INDENT 3.5
+A \fI\%pkg_resources entry point string\fP that
+resolves to a Python callable.  The default value is
+\fBsupervisor.dispatchers:default_handler\fP\&.  Specifying an alternate
+result handler is a very uncommon thing to need to do, and as a
+result, how to create one is not documented.
+.UNINDENT
+.UNINDENT
+.sp
+Consult \fI\%[program:x] Section Settings\fP for other allowable keys, delta the
+above constraints and additions.
+.SS \fB[eventlistener:x]\fP Section Example
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+[eventlistener:theeventlistenername]
+command=/bin/eventlistener
+process_name=%(program_name)s_%(process_num)02d
+numprocs=5
+events=PROCESS_STATE
+buffer_size=10
+directory=/tmp
+umask=022
+priority=\-1
+autostart=true
+autorestart=unexpected
+startsecs=1
+startretries=3
+exitcodes=0,2
+stopsignal=QUIT
+stopwaitsecs=10
+stopasgroup=false
+killasgroup=false
+user=chrism
+redirect_stderr=false
+stdout_logfile=/a/path
+stdout_logfile_maxbytes=1MB
+stdout_logfile_backups=10
+stdout_events_enabled=false
+stderr_logfile=/a/path
+stderr_logfile_maxbytes=1MB
+stderr_logfile_backups=10
+stderr_events_enabled=false
+environment=A="1",B="2"
+serverurl=AUTO
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.SS \fB[rpcinterface:x]\fP Section Settings
+.sp
+Adding \fBrpcinterface:x\fP settings in the configuration file is only
+useful for people who wish to extend supervisor with additional custom
+behavior.
+.sp
+In the sample config file, there is a section which is named
+\fB[rpcinterface:supervisor]\fP\&.  By default it looks like the
+following.
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+[rpcinterface:supervisor]
+supervisor.rpcinterface_factory = supervisor.rpcinterface:make_main_rpcinterface
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+The \fB[rpcinterface:supervisor]\fP section \fImust\fP remain in the
+configuration for the standard setup of supervisor to work properly.
+If you don\(aqt want supervisor to do anything it doesn\(aqt already do out
+of the box, this is all you need to know about this type of section.
+.sp
+However, if you wish to add rpc interface namespaces in order to
+customize supervisor, you may add additional \fB[rpcinterface:foo]\fP
+sections, where "foo" represents the namespace of the interface (from
+the web root), and the value named by
+\fBsupervisor.rpcinterface_factory\fP is a factory callable which should
+have a function signature that accepts a single positional argument
+\fBsupervisord\fP and as many keyword arguments as required to perform
+configuration.  Any extra key/value pairs defined within the
+\fB[rpcinterface:x]\fP section will be passed as keyword arguments to
+the factory.
+.sp
+Here\(aqs an example of a factory function, created in the
+\fB__init__.py\fP file of the Python package \fBmy.package\fP\&.
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+from my.package.rpcinterface import AnotherRPCInterface
+
+def make_another_rpcinterface(supervisord, **config):
+    retries = int(config.get(\(aqretries\(aq, 0))
+    another_rpc_interface = AnotherRPCInterface(supervisord, retries)
+    return another_rpc_interface
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+And a section in the config file meant to configure it.
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+[rpcinterface:another]
+supervisor.rpcinterface_factory = my.package:make_another_rpcinterface
+retries = 1
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.SS \fB[rpcinterface:x]\fP Section Values
+.sp
+\fBsupervisor.rpcinterface_factory\fP
+.INDENT 0.0
+.INDENT 3.5
+\fBpkg_resources\fP "entry point" dotted name to your RPC interface\(aqs
+factory function.
+.sp
+\fIDefault\fP: N/A
+.sp
+\fIRequired\fP:  No.
+.sp
+\fIIntroduced\fP: 3.0
+.UNINDENT
+.UNINDENT
+.SS \fB[rpcinterface:x]\fP Section Example
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+[rpcinterface:another]
+supervisor.rpcinterface_factory = my.package:make_another_rpcinterface
+retries = 1
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.SS Glossary
+.INDENT 0.0
+.TP
+.B daemontools
+A \fI\%process control system by D.J. Bernstein\fP\&.
+.TP
+.B launchd
+A \fI\%process control system used by Apple\fP as process 1 under Mac
+OS X.
+.TP
+.B runit
+A \fI\%process control system\fP\&.
+.TP
+.B Superlance
+A package which provides various event listener implementations
+that plug into Supervisor which can help monitor process memory
+usage and crash status: \fI\%http://pypi.python.org/pypi/superlance\fP\&.
+.TP
+.B umask
+Abbreviation of \fIuser mask\fP: sets the file mode creation mask of
+the current process.  See \fI\%http://en.wikipedia.org/wiki/Umask\fP\&.
+.UNINDENT
+.SH AUTHOR
+This man page was created by Orestis Ioannou <orestis@oioannou.com> using the
+official documentation.
+.SH COPYRIGHT
+2004-2015, Agendaless Consulting and Contributors
+.\" Generated by docutils manpage writer.
+.

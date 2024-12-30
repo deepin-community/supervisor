@@ -1,0 +1,670 @@
+.\" Man page generated from reStructuredText.
+.
+.TH "SUPERVISORD" "1" "December 10, 2015" "3.2.0" "Supervisor"
+.SH NAME
+supervisord \- supervisord Documentation
+.
+.nr rst2man-indent-level 0
+.
+.de1 rstReportMargin
+\\$1 \\n[an-margin]
+level \\n[rst2man-indent-level]
+level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
+-
+\\n[rst2man-indent0]
+\\n[rst2man-indent1]
+\\n[rst2man-indent2]
+..
+.de1 INDENT
+.\" .rstReportMargin pre:
+. RS \\$1
+. nr rst2man-indent\\n[rst2man-indent-level] \\n[an-margin]
+. nr rst2man-indent-level +1
+.\" .rstReportMargin post:
+..
+.de UNINDENT
+. RE
+.\" indent \\n[an-margin]
+.\" old: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.nr rst2man-indent-level -1
+.\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.in \\n[rst2man-indent\\n[rst2man-indent-level]]u
+..
+.sp
+Supervisor is a client/server system that allows its users to monitor
+and control a number of processes on UNIX\-like operating systems.
+.sp
+It shares some of the same goals of programs like launchd,
+daemontools, and runit\&. Unlike some of these programs,
+it is not meant to be run as a substitute for \fBinit\fP as "process id
+1". Instead it is meant to be used to control processes related to a
+project or a customer, and is meant to start like any other program at
+boot time.
+.SH DOCUMENTATION
+.SS \fBsupervisord\fP
+.sp
+The server piece of supervisor is named \fBsupervisord\fP\&.  It
+is responsible for starting child programs at its own invocation,
+responding to commands from clients, restarting crashed or exited
+subprocesseses, logging its subprocess \fBstdout\fP and \fBstderr\fP
+output, and generating and handling "events" corresponding to points
+in subprocess lifetimes.
+.sp
+The server process uses a configuration file.  This is typically
+located in \fB/etc/supervisord.conf\fP\&.  This configuration file
+is a "Windows\-INI" style config file.  It is important to keep this
+file secure via proper filesystem permissions because it may contain
+unencrypted usernames and passwords.
+.UNINDENT
+.UNINDENT
+.SS Running Supervisor
+.sp
+This section makes reference to a \fBBINDIR\fP when explaining how
+to run the \fBsupervisord\fP and \fBsupervisorctl\fP
+commands.  This is the "bindir" directory that your Python
+installation has been configured with.  For example, for an
+installation of Python installed via \fB\&./configure
+\-\-prefix=/usr/local/py; make; make install\fP, \fBBINDIR\fP would
+be \fB/usr/local/py/bin\fP\&. Python interpreters on different
+platforms use a different \fBBINDIR\fP\&.  Look at the output of
+\fBsetup.py install\fP if you can\(aqt figure out where yours is.
+.SS Adding a Program
+.sp
+Before \fBsupervisord\fP will do anything useful for you, you\(aqll
+need to add at least one \fBprogram\fP section to its configuration.
+The \fBprogram\fP section will define a program that is run and managed
+when you invoke the \fBsupervisord\fP command.  To add a program,
+you\(aqll need to edit the \fBsupervisord.conf\fP file.
+.sp
+One of the simplest possible programs to run is the UNIX
+\fBcat\fP program.  A \fBprogram\fP section that will run \fBcat\fP
+when the \fBsupervisord\fP process starts up is shown below.
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+[program:foo]
+command=/bin/cat
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+This stanza may be cut and pasted into the \fBsupervisord.conf\fP
+file.  This is the simplest possible program configuration, because it
+only names a command.  Program configuration sections have many other
+configuration options which aren\(aqt shown here.  See
+programx_section for more information.
+.SS Running \fBsupervisord\fP
+.sp
+To start \fBsupervisord\fP, run \fB$BINDIR/supervisord\fP\&.  The
+resulting process will daemonize itself and detach from the terminal.
+It keeps an operations log at \fB$CWD/supervisor.log\fP by default.
+.sp
+You may start the \fBsupervisord\fP executable in the foreground
+by passing the \fB\-n\fP flag on its command line.  This is useful to
+debug startup problems.
+.sp
+\fBWARNING:\fP
+.INDENT 0.0
+.INDENT 3.5
+When \fBsupervisord\fP starts up, it will search for its
+configuration file in default locations \fIincluding the current working
+directory\fP\&.  If you are security\-conscious you will probably want to
+specify a "\-c" argument after the \fBsupervisord\fP command
+specifying an absolute path to a configuration file to ensure that someone
+doesn\(aqt trick you into running supervisor from within a directory that
+contains a rogue \fBsupervisord.conf\fP file.  A warning is emitted when
+supervisor is started as root without this \fB\-c\fP argument.
+.UNINDENT
+.UNINDENT
+.sp
+To change the set of programs controlled by \fBsupervisord\fP,
+edit the \fBsupervisord.conf\fP file and \fBkill \-HUP\fP or otherwise
+restart the \fBsupervisord\fP process.  This file has several
+example program definitions.
+.sp
+The \fBsupervisord\fP command accepts a number of command\-line
+options.  Each of these command line options overrides any equivalent
+value in the configuration file.
+.SS \fBsupervisord\fP Command\-Line Options
+.INDENT 0.0
+.TP
+.BI \-c \ FILE\fP,\fB \ \-\-configuration\fB= FILE
+The path to a \fBsupervisord\fP configuration file.
+.TP
+.B \-n\fP,\fB  \-\-nodaemon
+Run \fBsupervisord\fP in the foreground.
+.TP
+.B \-h\fP,\fB  \-\-help
+Show \fBsupervisord\fP command help.
+.TP
+.BI \-u \ USER\fP,\fB \ \-\-user\fB= USER
+UNIX username or numeric user id.  If \fBsupervisord\fP is
+started as the root user, setuid to this user as soon as possible
+during startup.
+.TP
+.BI \-m \ OCTAL\fP,\fB \ \-\-umask\fB= OCTAL
+Octal number (e.g. 022) representing the umask that should
+be used by \fBsupervisord\fP after it starts.
+.TP
+.BI \-d \ PATH\fP,\fB \ \-\-directory\fB= PATH
+When supervisord is run as a daemon, cd to this directory before
+daemonizing.
+.TP
+.BI \-l \ FILE\fP,\fB \ \-\-logfile\fB= FILE
+Filename path to use as the supervisord activity log.
+.TP
+.BI \-y \ BYTES\fP,\fB \ \-\-logfile_maxbytes\fB= BYTES
+Max size of the supervisord activity log file before a rotation
+occurs.  The value is suffix\-multiplied, e.g "1" is one byte, "1MB"
+is 1 megabyte, "1GB" is 1 gigabyte.
+.TP
+.BI \-y \ NUM\fP,\fB \ \-\-logfile_backups\fB= NUM
+Number of backup copies of the supervisord activity log to keep
+around.  Each logfile will be of size \fBlogfile_maxbytes\fP\&.
+.TP
+.BI \-e \ LEVEL\fP,\fB \ \-\-loglevel\fB= LEVEL
+The logging level at which supervisor should write to the activity
+log.  Valid levels are \fBtrace\fP, \fBdebug\fP, \fBinfo\fP, \fBwarn\fP,
+\fBerror\fP, and \fBcritical\fP\&.
+.TP
+.BI \-j \ FILE\fP,\fB \ \-\-pidfile\fB= FILE
+The filename to which supervisord should write its pid file.
+.TP
+.BI \-i \ STRING\fP,\fB \ \-\-identifier\fB= STRING
+Arbitrary string identifier exposed by various client UIs for this
+instance of supervisor.
+.TP
+.BI \-q \ PATH\fP,\fB \ \-\-childlogdir\fB= PATH
+A path to a directory (it must already exist) where supervisor will
+write its \fBAUTO\fP \-mode child process logs.
+.TP
+.B \-k\fP,\fB  \-\-nocleanup
+Prevent \fBsupervisord\fP from performing cleanup (removal of
+old \fBAUTO\fP process log files) at startup.
+.TP
+.BI \-a \ NUM\fP,\fB \ \-\-minfds\fB= NUM
+The minimum number of file descriptors that must be available to
+the supervisord process before it will start successfully.
+.TP
+.B \-t\fP,\fB  \-\-strip_ansi
+Strip ANSI escape sequences from all child log process.
+.TP
+.B \-v\fP,\fB  \-\-version
+Print the supervisord version number out to stdout and exit.
+.TP
+.BI \-\-profile_options\fB= LIST
+Comma\-separated options list for profiling.  Causes
+\fBsupervisord\fP to run under a profiler, and output results
+based on the options, which is a comma\-separated list of the
+following: \fBcumulative\fP, \fBcalls\fP, \fBcallers\fP\&.
+E.g. \fBcumulative,callers\fP\&.
+.TP
+.BI \-\-minprocs\fB= NUM
+The minimum number of OS process slots that must be available to
+the supervisord process before it will start successfully.
+.UNINDENT
+.SS Signals
+.sp
+The \fBsupervisord\fP program may be sent signals which cause it
+to perform certain actions while it\(aqs running.
+.sp
+You can send any of these signals to the single \fBsupervisord\fP
+process id.  This process id can be found in the file represented by
+the \fBpidfile\fP parameter in the \fB[supervisord]\fP section of the
+configuration file (by default it\(aqs \fB$CWD/supervisord.pid\fP).
+.SS Signal Handlers
+.sp
+\fBSIGTERM\fP
+.INDENT 0.0
+.INDENT 3.5
+\fBsupervisord\fP and all its subprocesses will shut down.
+This may take several seconds.
+.UNINDENT
+.UNINDENT
+.sp
+\fBSIGINT\fP
+.INDENT 0.0
+.INDENT 3.5
+\fBsupervisord\fP and all its subprocesses will shut down.
+This may take several seconds.
+.UNINDENT
+.UNINDENT
+.sp
+\fBSIGQUIT\fP
+.INDENT 0.0
+.INDENT 3.5
+\fBsupervisord\fP and all its subprocesses will shut down.
+This may take several seconds.
+.UNINDENT
+.UNINDENT
+.sp
+\fBSIGHUP\fP
+.INDENT 0.0
+.INDENT 3.5
+\fBsupervisord\fP will stop all processes, reload the
+configuration from the first config file it finds, and restart all
+processes.
+.UNINDENT
+.UNINDENT
+.sp
+\fBSIGUSR2\fP
+.INDENT 0.0
+.INDENT 3.5
+\fBsupervisord\fP will close and reopen the main activity log
+and all child log files.
+.UNINDENT
+.UNINDENT
+.SS Runtime Security
+.sp
+The developers have done their best to assure that use of a
+\fBsupervisord\fP process running as root cannot lead to
+unintended privilege escalation.  But \fBcaveat emptor\fP\&.  Supervisor
+is not as paranoid as something like DJ Bernstein\(aqs
+daemontools, inasmuch as \fBsupervisord\fP allows for
+arbitrary path specifications in its configuration file to which data
+may be written.  Allowing arbitrary path selections can create
+vulnerabilities from symlink attacks.  Be careful when specifying
+paths in your configuration.  Ensure that the \fBsupervisord\fP
+configuration file cannot be read from or written to by unprivileged
+users and that all files installed by the supervisor package have
+"sane" file permission protection settings.  Additionally, ensure that
+your \fBPYTHONPATH\fP is sane and that all Python standard
+library files have adequate file permission protections.
+.SS Running \fBsupervisord\fP automatically on startup
+.sp
+If you are using a distribution\-packaged version of Supervisor, it should
+already be integrated into the service management infrastructure of your
+distribution.
+.sp
+There are user\-contributed scripts for various operating systems at:
+\fI\%https://github.com/Supervisor/initscripts\fP
+.sp
+There are some answers at Serverfault in case you get stuck:
+\fI\%How to automatically start supervisord on Linux (Ubuntu)\fP
+.SH Subprocesses
+.sp
+\fBsupervisord\fP\(aqs primary purpose is to create and manage
+processes based on data in its configuration file.  It does this by
+creating subprocesses.  Each subprocess spawned by supervisor is
+managed for the entirety of its lifetime by supervisord
+(\fBsupervisord\fP is the parent process of each process it
+creates).  When a child dies, supervisor is notified of its death via
+the \fBSIGCHLD\fP signal, and it performs the appropriate operation.
+.SS Nondaemonizing of Subprocesses
+.sp
+Programs meant to be run under supervisor should not daemonize
+themselves.  Instead, they should run in the foreground.  They should
+not detach from the terminal from which they are started.
+.sp
+The easiest way to tell if a program will run in the foreground is to
+run the command that invokes the program from a shell prompt.  If it
+gives you control of the terminal back, but continues running, it\(aqs
+daemonizing itself and that will almost certainly be the wrong way to
+run it under supervisor.  You want to run a command that essentially
+requires you to press \fBCtrl\-C\fP to get control of the terminal
+back.  If it gives you a shell prompt back after running it without
+needing to press \fBCtrl\-C\fP, it\(aqs not useful under supervisor.  All
+programs have options to be run in the foreground but there\(aqs no
+"standard way" to do it; you\(aqll need to read the documentation for
+each program.
+.sp
+Below are configuration file examples that are known to start
+common programs in "foreground" mode under Supervisor.
+.SS Examples of Program Configurations
+.sp
+Here are some "real world" program configuration examples:
+.SS Apache 2.2.6
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+[program:apache2]
+command=/path/to/httpd \-c "ErrorLog /dev/stdout" \-DFOREGROUND
+redirect_stderr=true
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.SS Two Zope 2.X instances and one ZEO server
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+[program:zeo]
+command=/path/to/runzeo
+priority=1
+
+[program:zope1]
+command=/path/to/instance/home/bin/runzope
+priority=2
+redirect_stderr=true
+
+[program:zope2]
+command=/path/to/another/instance/home/bin/runzope
+priority=2
+redirect_stderr=true
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.SS Postgres 8.X
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+[program:postgres]
+command=/path/to/postmaster
+; we use the "fast" shutdown signal SIGINT
+stopsignal=INT
+redirect_stderr=true
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.SS OpenLDAP \fBslapd\fP
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+[program:slapd]
+command=/path/to/slapd \-f /path/to/slapd.conf \-h ldap://0.0.0.0:8888
+redirect_stderr=true
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.SS Other Examples
+.sp
+Other examples of shell scripts that could be used to start services
+under \fBsupervisord\fP can be found at
+\fI\%http://thedjbway.b0llix.net/services.html\fP\&.  These examples are
+actually for \fBdaemontools\fP but the premise is the same for
+supervisor.
+.sp
+Another collection of recipes for starting various programs in the
+foreground is available from \fI\%http://smarden.org/runit/runscripts.html\fP\&.
+.SS \fBpidproxy\fP Program
+.sp
+Some processes (like \fBmysqld\fP) ignore signals sent to the
+actual process which is spawned by \fBsupervisord\fP\&.  Instead, a
+"special" thread/process is created by these kinds of programs which
+is responsible for handling signals.  This is problematic because
+\fBsupervisord\fP can only kill a process which it creates
+itself.  If a process created by \fBsupervisord\fP creates its
+own child processes, \fBsupervisord\fP cannot kill them.
+.sp
+Fortunately, these types of programs typically write a "pidfile" which
+contains the "special" process\(aq PID, and is meant to be read and used
+in order to kill the process.  As a workaround for this case, a
+special \fBpidproxy\fP program can handle startup of these kinds
+of processes.  The \fBpidproxy\fP program is a small shim that
+starts a process, and upon the receipt of a signal, sends the signal
+to the pid provided in a pidfile.  A sample configuration program
+entry for a pidproxy\-enabled program is provided below.
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+[program:mysql]
+command=/path/to/pidproxy /path/to/pidfile /path/to/mysqld_safe
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+The \fBpidproxy\fP program is put into your configuration\(aqs
+\fB$BINDIR\fP when supervisor is installed (it is a "console script").
+.SS Subprocess Environment
+.sp
+Subprocesses will inherit the environment of the shell used to start
+the \fBsupervisord\fP program.  Several environment variables
+will be set by \fBsupervisord\fP itself in the child\(aqs
+environment also, including \fBSUPERVISOR_ENABLED\fP (a flag
+indicating the process is under supervisor control),
+\fBSUPERVISOR_PROCESS_NAME\fP (the config\-file\-specified process
+name for this process) and \fBSUPERVISOR_GROUP_NAME\fP (the
+config\-file\-specified process group name for the child process).
+.sp
+These environment variables may be overridden within the
+\fB[supervisord]\fP section config option named \fBenvironment\fP (applies
+to all subprocesses) or within the per\- \fB[program:x]\fP section
+\fBenvironment\fP config option (applies only to the subprocess
+specified within the \fB[program:x]\fP section).  These "environment"
+settings are additive.  In other words, each subprocess\(aq environment
+will consist of:
+.INDENT 0.0
+.INDENT 3.5
+The environment variables set within the shell used to start
+supervisord...
+.sp
+\&... added\-to/overridden\-by ...
+.INDENT 0.0
+.TP
+.B \&... the environment variables set within the "environment" global
+.INDENT 7.0
+.INDENT 3.5
+config option ...
+.UNINDENT
+.UNINDENT
+.sp
+\&... added\-to/overridden\-by ...
+.INDENT 7.0
+.TP
+.B \&... supervisor\-specific environment variables
+(\fBSUPERVISOR_ENABLED\fP,
+\fBSUPERVISOR_PROCESS_NAME\fP,
+\fBSUPERVISOR_GROUP_NAME\fP) ..
+.UNINDENT
+.sp
+\&... added\-to/overridden\-by ...
+.INDENT 7.0
+.TP
+.B \&... the environment variables set within the per\-process
+"environment" config option.
+.UNINDENT
+.UNINDENT
+.UNINDENT
+.UNINDENT
+.sp
+No shell is executed by \fBsupervisord\fP when it runs a
+subprocess, so environment variables such as \fBUSER\fP,
+\fBPATH\fP, \fBHOME\fP, \fBSHELL\fP, \fBLOGNAME\fP,
+etc. are not changed from their defaults or otherwise reassigned.
+This is particularly important to note when you are running a program
+from a \fBsupervisord\fP run as root with a \fBuser=\fP stanza in
+the configuration.  Unlike \fBcron\fP, \fBsupervisord\fP
+does not attempt to divine and override "fundamental" environment
+variables like \fBUSER\fP, \fBPATH\fP, \fBHOME\fP, and
+\fBLOGNAME\fP when it performs a setuid to the user defined within
+the \fBuser=\fP program config option.  If you need to set environment
+variables for a particular program that might otherwise be set by a
+shell invocation for a particular user, you must do it explicitly
+within the \fBenvironment=\fP program config option.  An
+example of setting these environment variables is as below.
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+[program:apache2]
+command=/home/chrism/bin/httpd \-c "ErrorLog /dev/stdout" \-DFOREGROUND
+user=chrism
+environment=HOME="/home/chrism",USER="chrism"
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.SS Process States
+.sp
+A process controlled by supervisord will be in one of the below states
+at any given time.  You may see these state names in various user
+interface elements in clients.
+.sp
+\fBSTOPPED\fP (0)
+.INDENT 0.0
+.INDENT 3.5
+The process has been stopped due to a stop request or
+has never been started.
+.UNINDENT
+.UNINDENT
+.sp
+\fBSTARTING\fP (10)
+.INDENT 0.0
+.INDENT 3.5
+The process is starting due to a start request.
+.UNINDENT
+.UNINDENT
+.sp
+\fBRUNNING\fP (20)
+.INDENT 0.0
+.INDENT 3.5
+The process is running.
+.UNINDENT
+.UNINDENT
+.sp
+\fBBACKOFF\fP (30)
+.INDENT 0.0
+.INDENT 3.5
+The process entered the \fBSTARTING\fP state but subsequently exited
+too quickly to move to the \fBRUNNING\fP state.
+.UNINDENT
+.UNINDENT
+.sp
+\fBSTOPPING\fP (40)
+.INDENT 0.0
+.INDENT 3.5
+The process is stopping due to a stop request.
+.UNINDENT
+.UNINDENT
+.sp
+\fBEXITED\fP (100)
+.INDENT 0.0
+.INDENT 3.5
+The process exited from the \fBRUNNING\fP state (expectedly or
+unexpectedly).
+.UNINDENT
+.UNINDENT
+.sp
+\fBFATAL\fP (200)
+.INDENT 0.0
+.INDENT 3.5
+The process could not be started successfully.
+.UNINDENT
+.UNINDENT
+.sp
+\fBUNKNOWN\fP (1000)
+.INDENT 0.0
+.INDENT 3.5
+The process is in an unknown state (\fBsupervisord\fP
+programming error).
+.UNINDENT
+.UNINDENT
+.sp
+Each process run under supervisor progresses through these states as
+per the following directed graph.
+.INDENT 0.0
+.INDENT 2.5
+[image: Subprocess State Transition Graph]
+[image]
+Subprocess State Transition Graph.UNINDENT
+.UNINDENT
+.sp
+A process is in the \fBSTOPPED\fP state if it has been stopped
+adminstratively or if it has never been started.
+.sp
+When an autorestarting process is in the \fBBACKOFF\fP state, it will be
+automatically restarted by \fBsupervisord\fP\&.  It will switch
+between \fBSTARTING\fP and \fBBACKOFF\fP states until it becomes evident
+that it cannot be started because the number of \fBstartretries\fP has
+exceeded the maximum, at which point it will transition to the
+\fBFATAL\fP state.  Each start retry will take progressively
+more time.
+.sp
+When a process is in the \fBEXITED\fP state, it will
+automatically restart:
+.INDENT 0.0
+.IP \(bu 2
+never if its \fBautorestart\fP parameter is set to \fBfalse\fP\&.
+.IP \(bu 2
+unconditionally if its \fBautorestart\fP parameter is set to \fBtrue\fP\&.
+.IP \(bu 2
+conditionally if its \fBautorestart\fP parameter is set to
+\fBunexpected\fP\&.  If it exited with an exit code that doesn\(aqt match
+one of the exit codes defined in the \fBexitcodes\fP configuration
+parameter for the process, it will be restarted.
+.UNINDENT
+.sp
+A process automatically transitions from \fBEXITED\fP to \fBRUNNING\fP as
+a result of being configured to autorestart conditionally or
+unconditionally.  The number of transitions between \fBRUNNING\fP and
+\fBEXITED\fP is not limited in any way: it is possible to create a
+configuration that endlessly restarts an exited process.  This is a
+feature, not a bug.
+.sp
+An autorestarted process will never be automatically restarted if it
+ends up in the \fBFATAL\fP state (it must be manually restarted from
+this state).
+.sp
+A process transitions into the \fBSTOPPING\fP state via an
+administrative stop request, and will then end up in the
+\fBSTOPPED\fP state.
+.sp
+A process that cannot be stopped successfully will stay in the
+\fBSTOPPING\fP state forever.  This situation should never be reached
+during normal operations as it implies that the process did not
+respond to a final \fBSIGKILL\fP signal sent to it by supervisor, which
+is "impossible" under UNIX.
+.sp
+State transitions which always require user action to invoke are
+these:
+.sp
+\fBFATAL\fP   \-> \fBSTARTING\fP
+.sp
+\fBRUNNING\fP \-> \fBSTOPPING\fP
+.sp
+State transitions which typically, but not always, require user
+action to invoke are these, with exceptions noted:
+.sp
+\fBSTOPPED\fP \-> \fBSTARTING\fP (except at supervisord startup if process
+is configured to autostart)
+.sp
+\fBEXITED\fP \-> \fBSTARTING\fP (except if process is configured to
+autorestart)
+.sp
+All other state transitions are managed by supervisord automatically.
+.SS Glossary
+.INDENT 0.0
+.TP
+.B daemontools
+A \fI\%process control system by D.J. Bernstein\fP\&.
+.TP
+.B launchd
+A \fI\%process control system used by Apple\fP as process 1 under Mac
+OS X.
+.TP
+.B runit
+A \fI\%process control system\fP\&.
+.TP
+.B Superlance
+A package which provides various event listener implementations
+that plug into Supervisor which can help monitor process memory
+usage and crash status: \fI\%http://pypi.python.org/pypi/superlance\fP\&.
+.TP
+.B umask
+Abbreviation of \fIuser mask\fP: sets the file mode creation mask of
+the current process.  See \fI\%http://en.wikipedia.org/wiki/Umask\fP\&.
+.SH AUTHOR
+This man page was created by Orestis Ioannou <orestis@oioannou.com> using the
+official documentation.
+.SH COPYRIGHT
+2004-2015, Agendaless Consulting and Contributors
+.\" Generated by docutils manpage writer.
+.

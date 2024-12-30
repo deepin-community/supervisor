@@ -1,0 +1,10 @@
+Document: supervisor
+Title: Supervisor Developer Manual
+Author: Agendaless Consulting and Contributors.
+Abstract: This manual describes the API of
+ the Supervisor Python package.
+Section: System/Administration
+
+Format: HTML
+Index: /usr/share/doc/supervisor/html/index.html
+Files: /usr/share/doc/supervisor/html/*
