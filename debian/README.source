@@ -1,0 +1,5 @@
+Supervisor does not use the python-medusa in Debian
+because upstream has deleted files not needed in Supervisor
+as well as patched certain files.
+
+More info https://github.com/Supervisor/supervisor/blob/master/supervisor/medusa/CHANGES.txt

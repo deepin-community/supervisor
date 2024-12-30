@@ -1,0 +1,31 @@
+From: Colin Watson <cjwatson@debian.org>
+Date: Thu, 12 Dec 2024 22:31:34 +0000
+Subject: Fix tests on Python 3.13
+
+Python 3.13 added a `__firstlineno__` attribute to classes
+(https://docs.python.org/3/reference/datamodel.html#type.__firstlineno__)
+whose value is an int, so the approach taken by
+`SubprocessTests.test_getProcessStateDescription` to test only actual
+states no longer works.  Exclude all attributes starting with `__`
+instead.
+
+Forwarded: https://github.com/Supervisor/supervisor/pull/1668
+Bug-Debian: https://bugs.debian.org/1089058
+Last-Update: 2024-12-12
+---
+ supervisor/tests/test_process.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/supervisor/tests/test_process.py b/supervisor/tests/test_process.py
+index d9370e2..24643b4 100644
+--- a/supervisor/tests/test_process.py
++++ b/supervisor/tests/test_process.py
+@@ -39,7 +39,7 @@ class SubprocessTests(unittest.TestCase):
+         from supervisor.states import ProcessStates
+         from supervisor.process import getProcessStateDescription
+         for statename, code in ProcessStates.__dict__.items():
+-            if isinstance(code, int):
++            if not statename.startswith("__"):
+                 self.assertEqual(getProcessStateDescription(code), statename)
+ 
+     def test_ctor(self):

@@ -1,0 +1,152 @@
+.\" Man page generated from reStructuredText.
+.
+.TH "SUPERVISORCTL" "1" "December 10, 2015" "3.2.0" "Supervisor"
+.SH NAME
+supervisorctl \- supervisorctl Documentation
+.
+.nr rst2man-indent-level 0
+.
+.de1 rstReportMargin
+\\$1 \\n[an-margin]
+level \\n[rst2man-indent-level]
+level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
+-
+\\n[rst2man-indent0]
+\\n[rst2man-indent1]
+\\n[rst2man-indent2]
+..
+.de1 INDENT
+.\" .rstReportMargin pre:
+. RS \\$1
+. nr rst2man-indent\\n[rst2man-indent-level] \\n[an-margin]
+. nr rst2man-indent-level +1
+.\" .rstReportMargin post:
+..
+.de UNINDENT
+. RE
+.\" indent \\n[an-margin]
+.\" old: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.nr rst2man-indent-level -1
+.\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.in \\n[rst2man-indent\\n[rst2man-indent-level]]u
+..
+.sp
+Supervisor is a client/server system that allows its users to monitor
+and control a number of processes on UNIX\-like operating systems.
+.sp
+It shares some of the same goals of programs like launchd,
+daemontools, and runit\&. Unlike some of these programs,
+it is not meant to be run as a substitute for \fBinit\fP as "process id
+1". Instead it is meant to be used to control processes related to a
+project or a customer, and is meant to start like any other program at
+boot time.
+.SH DOCUMENTATION
+.SS Supervisor Components
+.sp
+\fBsupervisorctl\fP
+.INDENT 0.0
+.INDENT 3.5
+The command\-line client piece of the supervisor is named
+\fBsupervisorctl\fP\&.  It provides a shell\-like interface to the
+features provided by \fBsupervisord\fP\&.  From
+\fBsupervisorctl\fP, a user can connect to different
+\fBsupervisord\fP processes, get status on the subprocesses
+controlled by, stop and start subprocesses of, and get lists of
+running processes of a \fBsupervisord\fP\&.
+.sp
+The command\-line client talks to the server across a UNIX domain
+socket or an internet (TCP) socket.  The server can assert that the
+user of a client should present authentication credentials before it
+allows him to perform commands.  The client process typically uses
+the same configuration file as the server but any configuration file
+with a \fB[supervisorctl]\fP section in it will work.
+.UNINDENT
+.UNINDENT
+.SS Running Supervisor
+.sp
+This section makes reference to a \fBBINDIR\fP when explaining how
+to run the \fBsupervisord\fP and \fBsupervisorctl\fP
+commands.  This is the "bindir" directory that your Python
+installation has been configured with.  For example, for an
+installation of Python installed via \fB\&./configure
+\-\-prefix=/usr/local/py; make; make install\fP, \fBBINDIR\fP would
+be \fB/usr/local/py/bin\fP\&. Python interpreters on different
+platforms use a different \fBBINDIR\fP\&.  Look at the output of
+\fBsetup.py install\fP if you can\(aqt figure out where yours is.
+.SS \fBsupervisorctl\fP Command\-Line Options
+.INDENT 0.0
+.TP
+.B \-c\fP,\fB  \-\-configuration
+Configuration file path (default /etc/supervisord.conf)
+.TP
+.B \-h\fP,\fB  \-\-help
+Print usage message and exit
+.TP
+.B \-i\fP,\fB  \-\-interactive
+Start an interactive shell after executing commands
+.TP
+.BI \-s\fP,\fB  \-\-serverurl \ URL
+URL on which supervisord server is listening (default "\fI\%http://localhost:9001\fP").
+.TP
+.B \-u\fP,\fB  \-\-username
+Username to use for authentication with server
+.TP
+.B \-p\fP,\fB  \-\-password
+Password to use for authentication with server
+.TP
+.B \-r\fP,\fB  \-\-history\-file
+Keep a readline history (if readline is available)
+.UNINDENT
+.sp
+\fIaction [arguments]\fP
+.sp
+Actions are commands like "tail" or "stop".  If \-i is specified or no action is
+specified on the command line, a "shell" interpreting actions typed
+interactively is started.  Use the action "help" to find out about available
+actions.
+.SS Running \fBsupervisorctl\fP
+.sp
+To start \fBsupervisorctl\fP, run \fB$BINDIR/supervisorctl\fP\&.  A
+shell will be presented that will allow you to control the processes
+that are currently managed by \fBsupervisord\fP\&.  Type "help" at
+the prompt to get information about the supported commands.
+.sp
+The \fBsupervisorctl\fP executable may be invoked with "one time"
+commands when invoked with arguments from a command line.  An example:
+\fBsupervisorctl stop all\fP\&.  If arguments are present on the
+command\-line, it will prevent the interactive shell from being
+invoked.  Instead, the command will be executed and
+\fBsupervisorctl\fP will exit.
+.sp
+If \fBsupervisorctl\fP is invoked in interactive mode against a
+\fBsupervisord\fP that requires authentication, you will be asked
+for authentication credentials.
+.SS Glossary
+.INDENT 0.0
+.TP
+.B daemontools
+A \fI\%process control system by D.J. Bernstein\fP\&.
+.TP
+.B launchd
+A \fI\%process control system used by Apple\fP as process 1 under Mac
+OS X.
+.TP
+.B runit
+A \fI\%process control system\fP\&.
+.TP
+.B Superlance
+A package which provides various event listener implementations
+that plug into Supervisor which can help monitor process memory
+usage and crash status: \fI\%http://pypi.python.org/pypi/superlance\fP\&.
+.TP
+.B umask
+Abbreviation of \fIuser mask\fP: sets the file mode creation mask of
+the current process.  See \fI\%http://en.wikipedia.org/wiki/Umask\fP\&.
+.UNINDENT
+.SH AUTHOR
+This man page was created by Orestis Ioannou <orestis@oioannou.com> using the
+official documentation.
+.SH COPYRIGHT
+2004-2015, Agendaless Consulting and Contributors
+.\" Generated by docutils manpage writer.
+.

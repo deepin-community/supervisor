@@ -1,0 +1,5 @@
+debian/echo_supervisord_conf.1
+debian/pidproxy.1
+debian/supervisor.1
+debian/supervisorctl.1
+debian/supervisord.1
